@@ -24,16 +24,16 @@ def test_pytorch_mnist():
     assert len(dataset) == 100
 
     # Get the first sample
-    assert torch.eq(dataset[0]['x'], 0)
-    assert len(dataset[0]['y']) == 784
+    assert torch.eq(dataset[0]['y'], 0)
+    assert len(dataset[0]['x']) == 784
 
     # Check that the sizes make sense.
     dataset = DatasetMNIST(n_rows=100, is_testing=True)
     assert len(dataset) == 100
 
     # Get the first sample
-    assert torch.eq(dataset[0]['x'], 2)
-    assert len(dataset[0]['y']) == 784
+    assert torch.eq(dataset[0]['y'], 2)
+    assert len(dataset[0]['x']) == 784
 
 
 def test_pytorch_fashion_mnist():
@@ -56,13 +56,13 @@ def test_pytorch_fashion_mnist():
     assert len(dataset) == 100
 
     # Get the first sample
-    assert torch.eq(dataset[0]['x'], 2)
-    assert len(dataset[0]['y']) == 784
+    assert torch.eq(dataset[0]['y'], 2)
+    assert len(dataset[0]['x']) == 784
 
     # Check that the sizes make sense.
     dataset = DatasetFashionMNIST(n_rows=100, is_testing=True)
     assert len(dataset) == 100
 
     # Get the first sample
-    assert torch.eq(dataset[0]['x'], 0)
-    assert len(dataset[0]['y']) == 784
+    assert torch.eq(dataset[0]['y'], 0)
+    assert len(dataset[0]['x']) == 784

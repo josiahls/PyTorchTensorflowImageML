@@ -66,6 +66,4 @@ fabric.properties
 .idea/
 pytorch_tensorflow_image_ml/.DS_Store
 pytorch_tensorflow_image_ml/data/
-pytorch_tensorflow_image_ml/pytorch_workspace/
-pytorch_tensorflow_image_ml/tensorflow_workspace/
 /pytorch_tensorflow_image_ml/data/
