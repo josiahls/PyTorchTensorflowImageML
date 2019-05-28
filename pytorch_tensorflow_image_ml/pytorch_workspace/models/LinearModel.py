@@ -1,10 +1,10 @@
 import torch
 
-from torch import nn
+from torch import nn, optim
 
 from pytorch_tensorflow_image_ml.pytorch_workspace.models.BaseModel import BaseModel
 from pytorch_tensorflow_image_ml.utils.config import Config
-from pytorch_tensorflow_image_ml.utils.dataset_mnist_pytorch import BasePyTorchDataset
+from pytorch_tensorflow_image_ml.utils.datasets_pytorch import BasePyTorchDataset
 
 
 class LinearModel(BaseModel):
@@ -12,10 +12,13 @@ class LinearModel(BaseModel):
     def __init__(self, config: Config, dataset: BasePyTorchDataset):
         super().__init__(config, dataset)
         # Init the module
-        self.model = LinearNNModule(dataset[0]['x'], dataset[0]['y'])
+        # noinspection PyUnresolvedReferences
+        self.model = LinearNNModule(dataset[0]['x'], torch.empty(dataset.n_classes)).to(device=self.device)
 
-    def step(self):
-        pass
+        # To keep the base model clean, when calling the loss function, we modify the y to match the format the function
+        # is expecting.
+        self.criterion = lambda y_pred, y: nn.CrossEntropyLoss()(y_pred, y.squeeze())
+        self.optimizer = optim.SGD(self.model.parameters(), self.config.learning_rate, self.config.momentum)
 
 
 # noinspection PyUnresolvedReferences
@@ -28,5 +31,5 @@ class LinearNNModule(nn.Module):
         self.out = nn.Linear(output_tensor.unsqueeze(0).shape[1], output_tensor.unsqueeze(0).shape[1])
 
     def forward(self, *input_tensor):
-        x = nn.Tanh()(self.f1(*input_tensor))
+        x = nn.LeakyReLU()(self.f1(*input_tensor))
         return self.out(x)

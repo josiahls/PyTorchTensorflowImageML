@@ -13,6 +13,14 @@ class Config:
         # Setup information (most important)
         self.agents = None  # type: str
 
+        """ Training Config """
+        self.split_percent = 0.7
+        self.validate_train_split = True
+        self.learning_rate = 0.001
+        self.momentum = 0.9
+        self.epochs = 20
+        self.batch_size = 10
+
     def add_argument(self, *args, **kwargs):
         self.parser.add_argument(*args, **kwargs)
 
