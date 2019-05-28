@@ -2,6 +2,8 @@ from abc import ABC
 
 import torch
 import torch.optim as optim
+import numpy as np
+from sklearn.metrics import f1_score, precision_score, recall_score, accuracy_score
 from torch import nn
 from torch.utils.data import DataLoader
 
@@ -32,7 +34,7 @@ class BaseModel(ABC):
     def forward(self, input_tensor):
         return self.model.forward(input_tensor)
 
-    def run_n_epochs(self, epochs: int, validate_train_split: bool=False) -> dict:
+    def run_n_epochs(self, epochs: int, validate_train_split: bool = False) -> list:
         """
         Handles dataset splitting and epoch iteration.
 
@@ -44,7 +46,8 @@ class BaseModel(ABC):
 
         """
         train_dataset = self.dataset
-        validation_dataset = None
+        val_dataset_loader = None
+        results = []
 
         # If we want validation set data, then break the training dataset into 2 smaller datasets.
         if validate_train_split:
@@ -53,26 +56,20 @@ class BaseModel(ABC):
 
             # noinspection PyUnresolvedReferences
             train_dataset, validation_dataset = torch.utils.data.random_split(self.dataset, lengths)
+            val_dataset_loader = DataLoader(dataset=validation_dataset, batch_size=self.config.batch_size, shuffle=True)
 
         # Init the DataLoaders
         train_dataset_loader = DataLoader(dataset=train_dataset, batch_size=self.config.batch_size, shuffle=True)
 
         for epoch in range(epochs):
-            self.step(train_dataset_loader)
+            train_results = self.step(train_dataset_loader)
+            val_results = None
 
             if validate_train_split:
-                self.validate(validation_dataset)
+                val_results = self.step(val_dataset_loader, evaluate=True)
 
-        return {}
+            results.append({'train': train_results, 'validation': val_results})
 
-    def validate(self, dataset: BasePyTorchDataset):
-        results = {}
-
-        # noinspection PyTypeChecker
-        loss = self.criterion(self.model.forward(torch.stack([dataset[i]['x'] for i in range(len(dataset))])),
-                              torch.stack([dataset[i]['y'] for i in range(len(dataset))]))
-
-        results['loss'] = loss.detach().cpu()
         return results
 
     def step(self, data_loader, evaluate=False):
@@ -90,6 +87,9 @@ class BaseModel(ABC):
 
         """
         self.model.train() if not evaluate else self.model.eval()
+        saved_y = None
+        saved_pred_y = None
+        saved_loss = []
 
         for i, data in enumerate(data_loader):
             x, y = (data['x'], data['y'])
@@ -105,3 +105,16 @@ class BaseModel(ABC):
             if not evaluate:
                 loss.backward()
                 self.optimizer.step()
+
+            saved_y = y if saved_y is None else torch.cat((saved_y, y))
+            saved_pred_y = pred_y if saved_pred_y is None else torch.cat((saved_pred_y, pred_y))
+            saved_loss.append(loss.detach().cpu())
+
+        saved_y = saved_y.detach()
+        saved_pred_y = saved_pred_y.detach()
+        results = {'loss': np.average(saved_loss),
+                   'f1_score': f1_score(saved_y, saved_pred_y.argmax(1), average='weighted'),
+                   'accuracy': accuracy_score(saved_y, saved_pred_y.argmax(1)),
+                   'precision': precision_score(saved_y, saved_pred_y.argmax(1), average='weighted'),
+                   'recall': recall_score(saved_y, saved_pred_y.argmax(1), average='weighted')}
+        return results

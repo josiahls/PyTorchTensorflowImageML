@@ -1,5 +1,6 @@
-from torch.utils.data import Dataset
-from typing import List, Tuple
+from typing import List
+
+from torch.utils.data import DataLoader
 
 from pytorch_tensorflow_image_ml.pytorch_workspace.models.BaseModel import BaseModel
 from pytorch_tensorflow_image_ml.utils.config import Config
@@ -40,9 +41,10 @@ class Trainer(object):
 
             for k in range(self.config.k_folds):
                 model_instance = model(self.config, dataset)
-                results = model_instance.run_n_epochs(self.config.epochs, self.config.validate_train_split)
+                train_val_results = model_instance.run_n_epochs(self.config.epochs, self.config.validate_train_split)
                 dataset.toggle_test_train(True)
-                test_results = model_instance.validate(dataset)
+                test_results = model_instance.step(DataLoader(dataset=dataset,
+                                                              batch_size=self.config.batch_size, shuffle=True), True)
                 dataset.toggle_test_train(False)
 
     def run_models_on_datasets(self):
