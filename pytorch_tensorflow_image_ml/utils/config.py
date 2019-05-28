@@ -20,6 +20,7 @@ class Config:
         self.momentum = 0.9
         self.epochs = 20
         self.batch_size = 10
+        self.k_folds = 1
 
     def add_argument(self, *args, **kwargs):
         self.parser.add_argument(*args, **kwargs)

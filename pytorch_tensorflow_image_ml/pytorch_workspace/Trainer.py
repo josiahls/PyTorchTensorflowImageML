@@ -1,5 +1,5 @@
 from torch.utils.data import Dataset
-from typing import List
+from typing import List, Tuple
 
 from pytorch_tensorflow_image_ml.pytorch_workspace.models.BaseModel import BaseModel
 from pytorch_tensorflow_image_ml.utils.config import Config
@@ -7,7 +7,16 @@ from pytorch_tensorflow_image_ml.utils.config import Config
 
 class Trainer(object):
 
-    def __init__(self, config: Config, models, datasets: List[Dataset]):
+    def __init__(self, config: Config, models, datasets: List[Tuple[Dataset, Dataset]]):
+        """
+        Handles model iteration and datasets iteration.
+        Allows for a quick convenient way to test many models.
+
+        Args:
+            config:
+            models:
+            datasets:
+        """
         self.config = config
         self.models = models
         self.datasets = datasets
@@ -17,6 +26,8 @@ class Trainer(object):
         Iterates through the list of datasets given a model,
         and trains the model on each dataset.
 
+        Will do k-fold cross validation.
+
         Args:
             model:
             datasets:
@@ -25,8 +36,11 @@ class Trainer(object):
 
         """
         for dataset in datasets:
-            model_instance = model(self.config, dataset)
-            model_instance.run_n_epochs(self.config.epochs)
+
+            for k in range(self.config.k_folds):
+                model_instance = model(self.config, dataset[0])
+                results = model_instance.run_n_epochs(self.config.epochs, self.config.validate_train_split)
+                test_results = model_instance.validate(dataset[1])
 
     def run_models_on_datasets(self):
         """

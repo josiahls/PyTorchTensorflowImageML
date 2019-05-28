@@ -32,27 +32,27 @@ class BaseModel(ABC):
     def forward(self, input_tensor):
         return self.model.forward(input_tensor)
 
-    def run_n_epochs(self, epochs: int):
+    def run_n_epochs(self, epochs: int, validate_train_split: bool=False) -> dict:
         """
         Handles dataset splitting and epoch iteration.
 
         Args:
+            validate_train_split:
             epochs:
 
-        Returns:
+        Returns: A dictionary containing log entries.
 
         """
         train_dataset = self.dataset
-        val_dataset_loader = None
+        validation_dataset = None
 
         # If we want validation set data, then break the training dataset into 2 smaller datasets.
-        if self.config.validate_train_split:
+        if validate_train_split:
             lengths = (int(len(self.dataset) * self.config.split_percent),
                        int(len(self.dataset) * (1 - self.config.split_percent)))
 
             # noinspection PyUnresolvedReferences
             train_dataset, validation_dataset = torch.utils.data.random_split(self.dataset, lengths)
-            val_dataset_loader = DataLoader(dataset=validation_dataset, batch_size=self.config.batch_size, shuffle=True)
 
         # Init the DataLoaders
         train_dataset_loader = DataLoader(dataset=train_dataset, batch_size=self.config.batch_size, shuffle=True)
@@ -60,8 +60,20 @@ class BaseModel(ABC):
         for epoch in range(epochs):
             self.step(train_dataset_loader)
 
-            if self.config.validate_train_split:
-                self.step(val_dataset_loader, evaluate=True)
+            if validate_train_split:
+                self.validate(validation_dataset)
+
+        return {}
+
+    def validate(self, dataset: BasePyTorchDataset):
+        results = {}
+
+        # noinspection PyTypeChecker
+        loss = self.criterion(self.model.forward(torch.stack([dataset[i]['x'] for i in range(len(dataset))])),
+                              torch.stack([dataset[i]['y'] for i in range(len(dataset))]))
+
+        results['loss'] = loss.detach().cpu()
+        return results
 
     def step(self, data_loader, evaluate=False):
         """
