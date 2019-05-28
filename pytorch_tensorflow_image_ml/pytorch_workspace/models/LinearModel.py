@@ -8,6 +8,7 @@ from pytorch_tensorflow_image_ml.utils.datasets_pytorch import BasePyTorchDatase
 
 
 class LinearModel(BaseModel):
+    NAME = 'LinearModel'
 
     def __init__(self, config: Config, dataset: BasePyTorchDataset):
         super().__init__(config, dataset)

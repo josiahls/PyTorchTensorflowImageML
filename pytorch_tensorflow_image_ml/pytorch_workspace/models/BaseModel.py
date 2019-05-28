@@ -7,11 +7,14 @@ from sklearn.metrics import f1_score, precision_score, recall_score, accuracy_sc
 from torch import nn
 from torch.utils.data import DataLoader
 
+from pytorch_tensorflow_image_ml.utils.PytorchSummaryWriter import PyTorchSummaryWriter
 from pytorch_tensorflow_image_ml.utils.config import Config
 from pytorch_tensorflow_image_ml.utils.datasets_pytorch import BasePyTorchDataset
 
 
 class BaseModel(ABC):
+    NAME = ''
+
     def __init__(self, config: Config, dataset: BasePyTorchDataset):
         """
         Base class for models. Contains an interface / implementation for forward,
@@ -34,7 +37,8 @@ class BaseModel(ABC):
     def forward(self, input_tensor):
         return self.model.forward(input_tensor)
 
-    def run_n_epochs(self, epochs: int, validate_train_split: bool = False) -> list:
+    def run_n_epochs(self, epochs: int, validate_train_split: bool = False,
+                     train_writer: PyTorchSummaryWriter=None, validation_writer: PyTorchSummaryWriter=None) -> list:
         """
         Handles dataset splitting and epoch iteration.
 
@@ -69,6 +73,11 @@ class BaseModel(ABC):
                 val_results = self.step(val_dataset_loader, evaluate=True)
 
             results.append({'train': train_results, 'validation': val_results})
+            # If the tensorboard writers are available, then write them.
+            if train_writer is not None:
+                [train_writer.add_scalar(key, train_results[key], epoch) for key in train_results]
+            if validation_writer is not None:
+                [validation_writer.add_scalar(key, val_results[key], epoch) for key in val_results]
 
         return results
 

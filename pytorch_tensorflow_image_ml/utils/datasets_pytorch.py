@@ -35,6 +35,7 @@ class BasePyTorchDataset(Dataset, ABC):
         self.dataset_root_path = get_absolute_path(folder_dir)
         self.csv_name = ''
         self.n_classes = 1
+        self.name = None
         self.main_dataframe = None  # type: pd.DataFrame
 
     @abstractmethod
@@ -81,6 +82,7 @@ class DatasetMNIST(BasePyTorchDataset):
         self.csv_name = 'mnist_test.csv' if self.is_testing else 'mnist_train.csv'
         self.main_dataframe = pd.read_csv(os.path.join(self.dataset_root_path, self.csv_name), nrows=self.n_rows)
         self.n_classes = 1
+        self.name = 'MNIST'
 
         if categorical:
             unique_values = np.unique([y['y'] for y in self])
@@ -128,6 +130,7 @@ class DatasetFashionMNIST(BasePyTorchDataset):
 
         self.csv_name = 'fashion-mnist_test.csv' if self.is_testing else 'fashion-mnist_train.csv'
         self.main_dataframe = pd.read_csv(os.path.join(self.dataset_root_path, self.csv_name), nrows=self.n_rows)
+        self.name = 'FashionMNIST'
 
         if categorical:
             unique_values = np.unique([y['y'] for y in self])
