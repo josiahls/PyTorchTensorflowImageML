@@ -13,11 +13,8 @@ def test_pytorch_trainer_init():
     config.k_folds = 3
 
     datasets = [
-        (DatasetMNIST(n_rows=100, transform=Compose([MNISTToXY(), ToTensor(), TreatCategorical()])),
-         DatasetMNIST(n_rows=100, transform=Compose([MNISTToXY(), ToTensor(), TreatCategorical()]), is_testing=True)),
-        (DatasetFashionMNIST(n_rows=100, transform=Compose([MNISTToXY(), ToTensor(), TreatCategorical()])),
-         DatasetFashionMNIST(n_rows=100, transform=Compose([MNISTToXY(), ToTensor(), TreatCategorical()]),
-                             is_testing=True))
+        DatasetMNIST(n_rows=100, transform=Compose([MNISTToXY(), ToTensor(), TreatCategorical()])),
+        DatasetFashionMNIST(n_rows=100, transform=Compose([MNISTToXY(), ToTensor(), TreatCategorical()]))
     ]
 
     models = [LinearModel]

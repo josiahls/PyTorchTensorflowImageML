@@ -38,6 +38,19 @@ class BasePyTorchDataset(Dataset, ABC):
         self.main_dataframe = None  # type: pd.DataFrame
 
     @abstractmethod
+    def toggle_test_train(self, is_testing=False):
+        """
+        Used to change the dataset's main dataframe.
+
+        Args:
+            is_testing:
+
+        Returns:
+
+        """
+        pass
+
+    @abstractmethod
     def __getitem__(self, index):
         pass
 
@@ -75,6 +88,11 @@ class DatasetMNIST(BasePyTorchDataset):
 
         if one_hot:
             self.transform.transforms.append(ToOneHot(self.n_classes))
+
+    def toggle_test_train(self, is_testing=False):
+        self.is_testing = is_testing
+        self.csv_name = 'mnist_test.csv' if self.is_testing else 'mnist_train.csv'
+        self.main_dataframe = pd.read_csv(os.path.join(self.dataset_root_path, self.csv_name), nrows=self.n_rows)
 
     def __getitem__(self, index):
         sample = self.main_dataframe.iloc[int(index)].to_dict()
@@ -118,6 +136,11 @@ class DatasetFashionMNIST(BasePyTorchDataset):
 
         if one_hot:
             self.transform.transforms.append(ToOneHot(self.n_classes))
+
+    def toggle_test_train(self, is_testing=False):
+        self.is_testing = is_testing
+        self.csv_name = 'fashion-mnist_test.csv' if self.is_testing else 'fashion-mnist_train.csv'
+        self.main_dataframe = pd.read_csv(os.path.join(self.dataset_root_path, self.csv_name), nrows=self.n_rows)
 
     def __getitem__(self, index):
         sample = self.main_dataframe.iloc[int(index)].to_dict()
