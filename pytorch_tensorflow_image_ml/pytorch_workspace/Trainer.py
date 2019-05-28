@@ -39,7 +39,7 @@ class Trainer(object):
 
         """
         for dataset in datasets:
-            avg_test_writer = PyTorchSummaryWriter(f'_test_{model.NAME}_{dataset.name}')
+            avg_test_writer = PyTorchSummaryWriter(f'_test_{model.NAME}_{dataset.name}_averaged')
             avg_train_writer = PyTorchSummaryWriter(f'_train_{model.NAME}_{dataset.name}_averaged')
             avg_validation_writer = PyTorchSummaryWriter(f'_validation_{model.NAME}_{dataset.name}_averaged')
             k_train_val_results = []
