@@ -6,7 +6,7 @@ from pytorch_tensorflow_image_ml.utils.datasets_pytorch import DatasetMNIST, Dat
 from pytorch_tensorflow_image_ml.utils.transforms import MNISTToXY, ToTensor, TreatCategorical, ToOneHot
 
 
-def test_pytorch_mnist():
+def test_mnist_pytorch():
     """
     Test MNIST dataset
     """
@@ -40,7 +40,7 @@ def test_pytorch_mnist():
     assert len(dataset[0]['x']) == 784
 
 
-def test_pytorch_mnist_categorical():
+def test_mnist_categorical_pytorch():
     """
     Test MNIST dataset
     """
@@ -74,7 +74,7 @@ def test_pytorch_mnist_categorical():
     assert len(dataset[0]['x']) == 784
 
 
-def test_pytorch_fashion_mnist():
+def test_fashion_mnist_pytorch():
     """
     Test Fashion MNIST dataset
     """

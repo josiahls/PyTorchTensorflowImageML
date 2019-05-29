@@ -21,6 +21,9 @@ class LinearModel(BaseModel):
         self.criterion = lambda y_pred, y: nn.CrossEntropyLoss()(y_pred, y.squeeze())
         self.optimizer = optim.SGD(self.model.parameters(), self.config.learning_rate, self.config.momentum)
 
+        # Go through the model layers and add forward hooks to them
+        # noinspection PyProtectedMember
+        [getattr(self.model, layer).register_forward_hook(self.get_activation(layer)) for layer in self.model._modules]
 
 # noinspection PyUnresolvedReferences
 class LinearNNModule(nn.Module):
@@ -28,8 +31,8 @@ class LinearNNModule(nn.Module):
         super().__init__()
 
         # Set up the output layers.
-        self.f1 = nn.Linear(input_tensor.unsqueeze(0).shape[1], output_tensor.unsqueeze(0).shape[1])
-        self.out = nn.Linear(output_tensor.unsqueeze(0).shape[1], output_tensor.unsqueeze(0).shape[1])
+        self.f1 = nn.Linear(input_tensor.unsqueeze(0).shape[1], input_tensor.unsqueeze(0).shape[1])
+        self.out = nn.Linear(input_tensor.unsqueeze(0).shape[1], output_tensor.unsqueeze(0).shape[1])
 
     def forward(self, *input_tensor):
         x = nn.LeakyReLU()(self.f1(*input_tensor))

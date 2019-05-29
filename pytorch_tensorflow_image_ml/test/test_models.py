@@ -7,7 +7,7 @@ from pytorch_tensorflow_image_ml.utils.datasets_pytorch import DatasetMNIST
 from pytorch_tensorflow_image_ml.utils.transforms import MNISTToXY, ToTensor, TreatCategorical
 
 
-def test_pytorch_linear():
+def test_linear_model_pytorch():
     config = Config()
     config.validate_train_split = False
     dataset = DatasetMNIST(n_rows=50, transform=Compose([MNISTToXY(), ToTensor(), TreatCategorical()]))

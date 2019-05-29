@@ -7,7 +7,7 @@ from pytorch_tensorflow_image_ml.utils.datasets_pytorch import DatasetMNIST, Dat
 from pytorch_tensorflow_image_ml.utils.transforms import MNISTToXY, ToTensor, TreatCategorical
 
 
-def test_pytorch_trainer_init():
+def test_trainer_pytorch_init():
     config = Config()
     config.epochs = 20
     config.k_folds = 3
@@ -22,3 +22,15 @@ def test_pytorch_trainer_init():
     trainer = Trainer(config, models=models, datasets=datasets)
     trainer.run_models_on_datasets()
     assert True
+
+
+def test_trainer_pytorch_run_model_on_dataset():
+    config = Config()
+    config.epochs = 20
+    config.k_folds = 1
+    trainer = Trainer(config)
+
+    result_1 = []
+    result_2 = []
+    dataset = DatasetMNIST(n_rows=100, transform=Compose([MNISTToXY(), ToTensor(), TreatCategorical()]))
+    trainer.run_model_on_dataset(LinearModel, dataset, result_1, result_2)
