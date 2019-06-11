@@ -1,10 +1,7 @@
 from typing import List
-import numpy as np
 from torch.utils.data import DataLoader
-
 from pytorch_tensorflow_image_ml.pytorch_workspace.models.BaseModel import BaseModel
 from pytorch_tensorflow_image_ml.utils.callbacks import Callback
-from pytorch_tensorflow_image_ml.utils.pytorch_summary_writer import PyTorchSummaryWriter
 from pytorch_tensorflow_image_ml.utils.config import Config
 from pytorch_tensorflow_image_ml.utils.datasets_pytorch import BasePyTorchDataset
 

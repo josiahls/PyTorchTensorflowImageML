@@ -1,26 +1,16 @@
 import copy
-import queue
-from collections import deque
-
-import PIL
-import io
-import math
 from abc import ABC
-from itertools import count
-from queue import Queue, PriorityQueue
-import matplotlib.pyplot as plt
+from queue import PriorityQueue
+from typing import Tuple, List
 
+import numpy as np
 import torch
 import torch.optim as optim
-import numpy as np
-import torchvision
 from sklearn.metrics import f1_score, precision_score, recall_score, accuracy_score
 from torch import nn
 from torch.utils.data import DataLoader
-from typing import Tuple, Dict, List
 
 from pytorch_tensorflow_image_ml.utils.callbacks import Callback
-from pytorch_tensorflow_image_ml.utils.pytorch_summary_writer import PyTorchSummaryWriter
 from pytorch_tensorflow_image_ml.utils.config import Config
 from pytorch_tensorflow_image_ml.utils.datasets_pytorch import BasePyTorchDataset
 from pytorch_tensorflow_image_ml.utils.sample_object import SampleObject

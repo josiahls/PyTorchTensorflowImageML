@@ -16,6 +16,7 @@ setup(name='pytorch_tensorflow_image_ml',
       packages=[package for package in find_packages()
                 if package.startswith('pytorch_tensorflow_image_ml')],
       zip_safe=False,
-      install_requires=['numpy', 'torch', 'tensorboardX', 'namedlist', 'pytest', 'torchvision', 'pandas', 'matplotlib'
+      install_requires=['numpy', 'torch', 'tensorboardX', 'namedlist', 'pytest', 'torchvision', 'pandas', 'matplotlib',
+                        'sklearn'
                         ]
 )

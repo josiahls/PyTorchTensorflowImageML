@@ -1,7 +1,5 @@
 import torch
-
 from torch import nn, optim
-
 from pytorch_tensorflow_image_ml.pytorch_workspace.models.BaseModel import BaseModel
 from pytorch_tensorflow_image_ml.utils.config import Config
 from pytorch_tensorflow_image_ml.utils.datasets_pytorch import BasePyTorchDataset
