@@ -25,6 +25,7 @@ class LinearModel(BaseModel):
         # noinspection PyProtectedMember
         [getattr(self.model, layer).register_forward_hook(self.get_activation(layer)) for layer in self.model._modules]
 
+
 # noinspection PyUnresolvedReferences
 class LinearNNModule(nn.Module):
     def __init__(self, input_tensor: torch.tensor, output_tensor: torch.tensor):

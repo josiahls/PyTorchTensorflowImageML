@@ -1,3 +1,7 @@
+import copy
+import queue
+from collections import deque
+
 import PIL
 import io
 import math
@@ -13,9 +17,10 @@ import torchvision
 from sklearn.metrics import f1_score, precision_score, recall_score, accuracy_score
 from torch import nn
 from torch.utils.data import DataLoader
-from typing import Tuple
+from typing import Tuple, Dict, List
 
-from pytorch_tensorflow_image_ml.utils.PytorchSummaryWriter import PyTorchSummaryWriter
+from pytorch_tensorflow_image_ml.utils.callbacks import Callback
+from pytorch_tensorflow_image_ml.utils.pytorch_summary_writer import PyTorchSummaryWriter
 from pytorch_tensorflow_image_ml.utils.config import Config
 from pytorch_tensorflow_image_ml.utils.datasets_pytorch import BasePyTorchDataset
 from pytorch_tensorflow_image_ml.utils.sample_object import SampleObject
@@ -54,11 +59,12 @@ class BaseModel(ABC):
         return hook
 
     def run_n_epochs(self, epochs: int, validate_train_split: bool = False,
-                     train_writer: PyTorchSummaryWriter = None, validation_writer: PyTorchSummaryWriter = None) -> list:
+                     callbacks: List[type(Callback)]=None) -> Tuple[list, dict]:
         """
         Handles dataset splitting and epoch iteration.
 
         Args:
+            callbacks:
             validation_writer:
             train_writer:
             validate_train_split:
@@ -67,6 +73,7 @@ class BaseModel(ABC):
         Returns: A dictionary containing log entries.
 
         """
+        callbacks = callbacks if callbacks else None
         train_dataset = self.dataset
         val_dataset_loader = None
         validation_dataset = None
@@ -87,117 +94,19 @@ class BaseModel(ABC):
         for epoch in range(epochs):
             scalar_train_results, scalar_val_results = self.run_epoch(scalar_results, train_dataset_loader,
                                                                       val_dataset_loader)
-            # If the tensorboard writers are available, then write them.
-            if train_writer is not None:
-                [train_writer.add_scalar(key, scalar_train_results[key], epoch) for key in scalar_train_results]
-            if validation_writer is not None:
-                [validation_writer.add_scalar(key, scalar_val_results[key], epoch) for key in scalar_val_results]
+            for callback in callbacks:
+                callback.on_epoch_end(scalar_train_results=scalar_train_results, scalar_val_results=scalar_val_results,
+                                      epoch=epoch)
 
         # Log data about best and worst samples.
         train_samples, val_samples = self.evaluate_samples(train_dataset, validation_dataset)
-        self.write_samples(train_samples, val_samples, train_writer, validation_writer, self.dataset.sample_type,
-                           self.dataset.image_shape)
 
-        return scalar_results
+        non_linear_results = {'train_samples': copy.deepcopy(train_samples),
+                              'validation_samples': copy.deepcopy(val_samples),
+                              'sample_type': self.dataset.sample_type,
+                              'image_shape': self.dataset.image_shape}
 
-    def write_samples(self, train_samples, val_samples, training_writer: PyTorchSummaryWriter,
-                      validation_writer: PyTorchSummaryWriter, sample_type,
-                      image_shape: Tuple[int, int, int] = None):
-        """
-        Handles cleanly writing samples to tensorboard.
-
-        Goal is to allow easily logging the best and worst samples no matter the sample type.
-
-        Notes:
-            Currently only handles images. Goal is to extend this to text, audio, etc.
-
-        Args:
-            val_samples:
-            train_samples:
-            training_writer:
-            validation_writer:
-            sample_type (str): Can be 'image'. Future implementation will allow text and audio.
-            image_shape ((int, int, int)): If the sample_type is 'image' then an image shape will be required.
-
-        Returns:
-
-        """
-        if sample_type == 'image':
-            assert image_shape is not None, 'image_shape needs to be defined as (Channel, Height, Width)'
-
-            for key in train_samples:
-                for i in count():
-                    sample = train_samples[key].get_nowait()
-                    image = sample.x.reshape(*image_shape)
-                    image_plot = self.image_to_figure_to_tf_image(image, sample.layer_activations,
-                                                                  f'\n\n\nActual Y: {sample.y} \n'
-                                                                  f'Predicted Y: {sample.pred_y}\n'
-                                                                  f'Confidence: {sample.score}')
-                    training_writer.add_image(key, image_plot, i, dataformats='HWC')
-                    if train_samples[key].empty():
-                        break
-
-            if validation_writer is not None:
-                for key in val_samples:
-                    for i in count():
-                        sample = val_samples[key].get_nowait()
-                        image = sample.x.reshape(*image_shape)
-                        image_plot = self.image_to_figure_to_tf_image(image, sample.layer_activations,
-                                                                      f'Actual Y: {sample.y} \n'
-                                                                      f'Predicted Y: {sample.pred_y}\n'
-                                                                      f'Confidence: {sample.score}')
-                        validation_writer.add_image(key, image_plot, i, dataformats='HWC')
-                        if val_samples[key].empty():
-                            break
-
-    # noinspection PyMethodMayBeStatic,PyUnresolvedReferences
-    def image_to_figure_to_tf_image(self, image, layer_activations, text: str):
-        """
-        Converts an image to a figure with some informative text.
-
-        Then uses PIL to convert the figure to png.
-
-        Finally, we convert the png to a 3 channel numpy image by keeping the first 3 channels.
-
-        Args:
-            image:
-            text:
-
-        Returns:
-        """
-        figure = plt.figure(figsize=(5, 10))
-        plt.subplot(1 + len(layer_activations), 1, 1)
-        plt.title(text)
-        plt.xticks([])
-        plt.yticks([])
-        plt.grid(False)
-        # Check if the image is grey scale
-        if image.shape[0] == 1:
-            plt.imshow(image.squeeze(0), cmap=plt.cm.binary)
-        else:
-            plt.imshow(image)
-        for i, layer_activation in enumerate(layer_activations):
-            plt.subplot(1 + len(layer_activations), 1, i + 2)
-            plt.title(f'Layer {layer_activation}')
-            plt.xticks([])
-            plt.yticks([])
-            plt.grid(False)
-            shape_format = layer_activations[layer_activation].shape
-            activation = np.copy(layer_activations[layer_activation])
-            square_root = math.sqrt(shape_format[1])
-            if square_root.is_integer():
-                activation = activation.reshape(int(square_root), int(square_root))
-            plt.imshow(activation, cmap=plt.cm.binary)
-
-        # Save the plot to a PNG in memory.
-        buf = io.BytesIO()
-        plt.savefig(buf, format='png')
-        # Closing the figure prevents it from being displayed directly inside
-        # the notebook.
-        plt.close(figure)
-        buf.seek(0)
-        # Create Image object
-        return np.array(PIL.Image.open(buf))[:, :, :3]
+        return scalar_results, non_linear_results
 
     def evaluate_samples(self, train_dataset, val_dataset, buffer_size=10):
         """
@@ -235,22 +144,26 @@ class BaseModel(ABC):
                 worst_train_samples.get_nowait()
 
         # Iterate through the validation samples
-        for element in val_dataset:
-            pred_y = self.forward(element['x'].unsqueeze(0))
-            best_val_samples.put(SampleObject(element['x'], element['y'], pred_y.argmax(),
-                                              pred_y[0, pred_y.argmax()].detach().numpy(),
-                                              self.activations.copy()))
-            worst_val_samples.put(SampleObject(element['x'], element['y'], pred_y.argmax(),
-                                               pred_y[0, pred_y.argmax()].detach().numpy(),
-                                               self.activations.copy(),
-                                               reversed_order=True))
-            if best_val_samples.full():
-                best_val_samples.get_nowait()
-            if worst_val_samples.full():
-                worst_val_samples.get_nowait()
+        if val_dataset:
+            for element in val_dataset:
+                pred_y = self.forward(element['x'].unsqueeze(0))
+                best_val_samples.put(SampleObject(element['x'], element['y'], pred_y.argmax(),
+                                                  pred_y[0, pred_y.argmax()].detach().numpy(),
+                                                  self.activations.copy()))
+                worst_val_samples.put(SampleObject(element['x'], element['y'], pred_y.argmax(),
+                                                   pred_y[0, pred_y.argmax()].detach().numpy(),
+                                                   self.activations.copy(),
+                                                   reversed_order=True))
+                if best_val_samples.full():
+                    best_val_samples.get_nowait()
+                if worst_val_samples.full():
+                    worst_val_samples.get_nowait()
 
-        return ({'best_train_samples': best_train_samples, 'worst_train_samples': worst_train_samples},
-                {'best_val_samples': best_val_samples, 'worst_val_samples': worst_val_samples})
+        # noinspection PyUnresolvedReferences
+        return ({'best_train_samples': best_train_samples.queue,
+                 'worst_train_samples': worst_train_samples.queue},
+                {'best_val_samples': best_val_samples.queue,
+                 'worst_val_samples': worst_val_samples.queue})
 
     def run_epoch(self, scalar_results, train_dataset_loader, val_dataset_loader):
         """

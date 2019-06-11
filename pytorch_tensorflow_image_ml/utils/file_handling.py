@@ -11,7 +11,8 @@ def get_absolute_path(directory, project_root='pytorch_tensorflow_image_ml', ign
         directory: The name of the folder to look for.
         project_root: The project root name. Generally should not be changed.
         ignore_hidden: For future use, for now, throws error because it cannot handle hidden files.
-        ignore_files: For future use, for now, throws error because it is expecting directories.
+        ignore_files: For future use, for now
+        , throws error because it is expecting directories.
 
     Returns:
 
