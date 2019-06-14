@@ -8,7 +8,7 @@ VERSION = 0.1
 
 setup(name='pytorch_tensorflow_image_ml',
       version=VERSION,
-      description='Robot agent using an RL HTN',
+      description='General repo for testing / benchmarking different machine learning models for images.',
       url='https://github.com/josiahls/PyTorchTensorflowImageML',
       author='Josiah Laivins',
       author_email='jlaivins@uncc.edu',
