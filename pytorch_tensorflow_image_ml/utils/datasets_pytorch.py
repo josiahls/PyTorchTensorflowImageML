@@ -37,7 +37,8 @@ class BasePyTorchDataset(Dataset, ABC):
         self.n_classes = 1
         self.name = None
         self.sample_type = ''
-        self.image_shape = None
+        self.input_shape = None
+        self.output_shape = None
         self.main_dataframe = None  # type: pd.DataFrame
 
     @abstractmethod
@@ -86,7 +87,7 @@ class DatasetMNIST(BasePyTorchDataset):
         self.n_classes = 1
         self.name = 'MNIST'
         self.sample_type = 'image'
-        self.image_shape = (1, 28, 28)
+        self.input_shape = (1, 28, 28)
 
         if categorical:
             unique_values = np.unique([y['y'] for y in self])
@@ -94,6 +95,8 @@ class DatasetMNIST(BasePyTorchDataset):
 
         if one_hot:
             self.transform.transforms.append(ToOneHot(self.n_classes))
+
+        self.output_shape = self.n_classes,
 
     def toggle_test_train(self, is_testing=False):
         self.is_testing = is_testing
@@ -136,7 +139,7 @@ class DatasetFashionMNIST(BasePyTorchDataset):
         self.main_dataframe = pd.read_csv(os.path.join(self.dataset_root_path, self.csv_name), nrows=self.n_rows)
         self.name = 'FashionMNIST'
         self.sample_type = 'image'
-        self.image_shape = (1, 28, 28)
+        self.input_shape = (1, 28, 28)
 
         if categorical:
             unique_values = np.unique([y['y'] for y in self])
@@ -145,6 +148,8 @@ class DatasetFashionMNIST(BasePyTorchDataset):
 
         if one_hot:
             self.transform.transforms.append(ToOneHot(self.n_classes))
+
+        self.output_shape = self.n_classes,
 
     def toggle_test_train(self, is_testing=False):
         self.is_testing = is_testing

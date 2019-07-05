@@ -3,6 +3,7 @@ from torch import nn, optim
 from pytorch_tensorflow_image_ml.pytorch_workspace.models.BaseModel import BaseModel
 from pytorch_tensorflow_image_ml.utils.config import Config
 from pytorch_tensorflow_image_ml.utils.datasets_pytorch import BasePyTorchDataset
+import numpy as np
 
 
 class LinearModel(BaseModel):
@@ -10,13 +11,19 @@ class LinearModel(BaseModel):
 
     def __init__(self, config: Config, dataset: BasePyTorchDataset):
         super().__init__(config, dataset)
+
+        # Input shape will need to be flattened
+        self.input_shape = self.input_shape if len(self.input_shape) == 1 else np.prod(self.input_shape)
+        self.output_shape = self.output_shape if len(self.output_shape) == 1 else np.prod(self.output_shape)
+
         # Init the module
         # noinspection PyUnresolvedReferences
-        self.model = LinearNNModule(dataset[0]['x'], torch.empty(dataset.n_classes)).to(device=self.device)
+        self.model = LinearNNModule(torch.empty(self.input_shape),
+                                    torch.empty(self.output_shape)).to(device=self.device)
 
         # To keep the base model clean, when calling the loss function, we modify the y to match the format the function
         # is expecting.
-        self.criterion = lambda y_pred, y: nn.CrossEntropyLoss()(y_pred, y.squeeze())
+        self.criterion = None
         self.optimizer = optim.SGD(self.model.parameters(), self.config.learning_rate, self.config.momentum)
 
         # Go through the model layers and add forward hooks to them

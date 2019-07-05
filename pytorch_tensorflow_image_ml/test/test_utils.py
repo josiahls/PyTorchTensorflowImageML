@@ -3,6 +3,7 @@ from pytorch_tensorflow_image_ml.utils.file_handling import get_absolute_path
 import pandas as pd
 import os
 
+
 def test_absolute_path():
     # Can it find the data directory?
     found_path = get_absolute_path('data')
@@ -15,6 +16,12 @@ def test_absolute_path():
     assert found_path.__contains__('mnist'), 'Failed in find the mnist directory.' \
                                              'As a note, this directory is expecting ' \
                                              ' the mnist dataset to exist for testing purposes.'
+    # Does it find sub directories?
+    found_path = get_absolute_path(['test', 'runs'])
+    assert found_path.__contains__('runs'), 'Failed in find the runs directory.' \
+                                            'As a note, this directory is expecting ' \
+                                            ' the mnist dataset to exist for testing purposes.'
+
 
 def test_pandas_dataset_load():
     absolute_path_to_mnist = get_absolute_path('mnist')

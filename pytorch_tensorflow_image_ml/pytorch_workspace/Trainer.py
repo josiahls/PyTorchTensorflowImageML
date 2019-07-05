@@ -16,7 +16,6 @@ class Trainer(object):
 
         Args:
             callbacks:
-            writer_prefix (str): A global prefix to add to all the tensorboard writer outputs.
             Useful for differentiating unit testing runs from actual runs.
             config:
             models:
@@ -47,7 +46,7 @@ class Trainer(object):
 
             callbacks = [callback(model_instance.NAME, dataset.name, k) for callback in self.callbacks]
             for callback in callbacks:
-                callback.on_train_begin()
+                callback.on_train_begin(model=model_instance)
 
             train_val_results, non_linear_results = model_instance.run_n_epochs(self.config.epochs,
                                                                                 self.config.validate_train_split,

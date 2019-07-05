@@ -29,7 +29,7 @@ def test_trainer_pytorch_init():
 
 def test_trainer_pytorch_run_model_on_dataset():
     config = Config()
-    config.epochs = 10
+    config.epochs = 50
     config.k_folds = 1
     trainer = Trainer(config, callbacks=[partial(TensorboardCallback, writer_prefix='callback_obj_testing')])
 

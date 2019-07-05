@@ -16,6 +16,15 @@ from pytorch_tensorflow_image_ml.utils.datasets_pytorch import BasePyTorchDatase
 from pytorch_tensorflow_image_ml.utils.sample_object import SampleObject
 
 
+class PicklableHook(object):
+    def __init__(self, name, activations_dict):
+        self.name = name
+        self.param_list = [activations_dict]
+
+    def __call__(self, _, __, output):
+        self.param_list[0][self.name] = output.detach()
+
+
 class BaseModel(ABC):
     NAME = ''
 
@@ -37,33 +46,35 @@ class BaseModel(ABC):
         self.criterion = None  # type: nn.CrossEntropyLoss
         self.optimizer = None  # type: optim
         self.model = None  # type: nn.Module
+
+        self.input_shape = dataset.input_shape
+        self.output_shape = dataset.output_shape
         self.activations = {}
+
+    def get_criterion(self, y_pred, y, **kwargs):
+        return nn.CrossEntropyLoss()(y_pred, y.squeeze())
 
     def forward(self, input_tensor):
         return self.model.forward(input_tensor)
 
     def get_activation(self, name):
-        def hook(_, __, output):
-            self.activations[name] = output.detach()
-
+        hook = PicklableHook(name, self.activations)
         return hook
 
     def run_n_epochs(self, epochs: int, validate_train_split: bool = False,
-                     callbacks: List[type(Callback)]=None) -> Tuple[list, dict]:
+                     callbacks: List[type(Callback)] = None) -> Tuple[list, dict]:
         """
         Handles dataset splitting and epoch iteration.
 
         Args:
             callbacks:
-            validation_writer:
-            train_writer:
             validate_train_split:
             epochs:
 
         Returns: A dictionary containing log entries.
 
         """
-        callbacks = callbacks if callbacks else None
+        callbacks = callbacks if callbacks else []
         train_dataset = self.dataset
         val_dataset_loader = None
         validation_dataset = None
@@ -94,7 +105,7 @@ class BaseModel(ABC):
         non_linear_results = {'train_samples': copy.deepcopy(train_samples),
                               'validation_samples': copy.deepcopy(val_samples),
                               'sample_type': self.dataset.sample_type,
-                              'image_shape': self.dataset.image_shape}
+                              'image_shape': self.dataset.input_shape}
 
         return scalar_results, non_linear_results
 
@@ -204,7 +215,7 @@ class BaseModel(ABC):
             pred_y = self.model.forward(x)
 
             # forward + backward + optimize
-            loss = self.criterion(pred_y, y)
+            loss = self.get_criterion(pred_y, y)
 
             if not evaluate:
                 loss.backward()
